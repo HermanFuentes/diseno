@@ -37,12 +37,20 @@ Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_
 
 //Definicion de Contrasenas
 //Contrasenas de Locker 1
-const String password_1 = "1234"; 
-const String password_2 = "5642";
+const String password_1 = "12342234"; 
+const String password_2 = "56422242";
+const String password_5 = "49392847"; 
+const String password_6 = "47593849";
+const String password_9 = "99381047"; 
+const String password_10 ="49039443";
 
 //Contrasenas de Locker 2
-const String password_3 = "4545"; 
-const String password_4 = "33112323"; 
+const String password_3 = "39847278"; 
+const String password_4 = "33412323"; 
+const String password_7 = "45498495"; 
+const String password_8 = "33394081"; 
+const String password_11 = "4384910"; 
+const String password_12 = "19039399";
 String input_password;
 
 //Definicion de Direccion de bit de la pantalla
@@ -54,7 +62,7 @@ void setup(){
   dht2.begin();// MODULO DHT11 2
 
 //Inicializacion de la Pantalla  
-  lcd.begin();
+  lcd.init();
   lcd.backlight();
   
 //Comienza comunicacion Serial  
@@ -144,7 +152,7 @@ void loop(){
     else if(key == '#') 
     
     {
-      if(input_password == password_1 || input_password == password_2  ) {
+      if(input_password == password_1 || input_password == password_2 || input_password == password_5 || input_password == password_6 || input_password == password_9 || input_password == password_10 ) {
         Serial.println("LOCKER 1 ABIERTO");
         digitalWrite(lock1,LOW);
          lcd.setCursor(0,0);
@@ -155,7 +163,7 @@ void loop(){
          lcd.println("--INGRESE LOCK#-");
       }
       
-      else if (input_password == password_3 || input_password == password_4)
+      else if (input_password == password_3 || input_password == password_4|| input_password == password_7 || input_password == password_8 || input_password == password_11 || input_password == password_12 )
       {
         lcd.setCursor(0,0);
         Serial.println("LOCKER 2 ABIERTO");
