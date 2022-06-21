@@ -1,0 +1,258 @@
+//Sistema Controlador
+//Version 3
+//GRUPO DARLINGTON
+#include <Keypad.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
+#include "DHT.h"
+#define DHT1_PIN 2     
+#define DHT2_PIN 3  
+#define DHTTYPE DHT11 
+DHT dht1(DHT1_PIN, DHTTYPE);
+DHT dht2(DHT2_PIN, DHTTYPE);
+
+//Definicion de el keypad utilizado
+const int ROW_NUM = 4; 
+const int COLUMN_NUM = 4; 
+
+//Definicion de Pins
+int lock1=A0;
+int lock2=A1;
+int ventilador=A2;
+int enfriador=A3;
+
+//Definicion de la Matriz
+char keys[ROW_NUM][COLUMN_NUM] =
+{
+  {'1', '2', '3', 'A'},
+  {'4', '5', '6', 'B'},
+  {'7', '8', '9', 'C'},
+  {'*', '0', '#', 'D'}
+};
+
+//Pins del keypad
+byte pin_rows[ROW_NUM] = {11, 10, 9, 8}; 
+byte pin_column[COLUMN_NUM] = {7, 6, 5, 4}; 
+Keypad keypad = Keypad( makeKeymap(keys), pin_rows, pin_column, ROW_NUM, COLUMN_NUM );
+
+//Definicion de Contrasenas
+//Contrasenas de Locker 1
+const String password_1 = "1234"; 
+const String password_2 = "5642"; 
+const String password_3 = "4545"; 
+const String password_4 = "2333"; 
+const String password_5 = "2332"; 
+const String password_6 = "6743";
+//LOCKER 2
+const String password_9 = "2344"; 
+const String password_10 ="5466";
+const String password_7 = "4566"; 
+const String password_8 = "7568"; 
+const String password_11 = "8657"; 
+const String password_12 = "4567";
+String input_password;
+
+//Definicion de Direccion de bit de la pantalla
+LiquidCrystal_I2C lcd(0x27, 16, 2);  
+
+void setup(){ 
+  pinMode(13, OUTPUT); //LED de verificacion 
+  dht1.begin();// MODULO DHT11 1
+  dht2.begin();// MODULO DHT11 2
+
+//Inicializacion de la Pantalla  
+  lcd.begin();
+  lcd.backlight();
+  
+//Comienza comunicacion Serial  
+  Serial.begin(9600);
+  while (!Serial);
+  Serial.println("ESCANEA EL CODIGO DE BARRA");
+
+  input_password.reserve(32); // bits de la contrasena
+  
+ //Definicion de LLavines, Ventilador y Enfriador 
+    pinMode(lock1, OUTPUT);
+    pinMode(lock2, OUTPUT);
+    pinMode(ventilador, OUTPUT);
+    pinMode(enfriador, OUTPUT);
+    digitalWrite(ventilador, LOW);
+    digitalWrite(enfriador,LOW);
+    
+ //Iniciando el Proceso de Enfriamiento   
+    lcd.setCursor(0,0);
+    lcd.println("INICIANDO.......");
+    delay(3000);
+    lcd.clear();
+    lcd.setCursor(0,1);
+    lcd.println("--INGRESE LOCK#-");
+
+}      
+
+void loop(){
+
+ //Reportes de Temperatura y Humedad
+ 
+  Serial.println("Temperatura 1: ");
+  Serial.println(getTemp("c", 1));
+  lcd.setCursor(11,0);
+  lcd.print(getTemp("c", 1));
+  lcd.setCursor(4,0);
+  lcd.println(getTemp("h", 1));
+  Serial.print(" *C ");
+ // Serial.print("Temperature 2: ");
+ // Serial.print(getTemp("c", 2));
+  //Serial.print(" *C ");
+  
+  //Si se establece comunicacion serial, inicia el scanner de codigos de barra
+  if (Serial.available())
+  {
+  int state = Serial.parseInt();
+  
+  //Analisis de Contrasenas con Scanner de Codigos de Barra
+  if (state == 1234 ||state == 5466|| state==4566|| state==7568|| state==8657 ||state == 4567)
+  {
+    digitalWrite(13, HIGH);
+    digitalWrite(lock1, LOW);
+    delay(500);
+    digitalWrite(lock1, HIGH);
+    Serial.println("LOCKER 1 ABIERTO");
+  }
+  
+  if (state == 2344 ||state == 5642|| state==4545|| state==2333|| state==2332)
+  {
+    digitalWrite(lock2, LOW);
+    delay(500);
+    digitalWrite(lock2, HIGH);
+    Serial.println("LOCKER 2 ABIERTO");
+  }
+
+}
+
+  //Deteccion de los botones del Keypad
+   char key = keypad.getKey();
+   digitalWrite(lock1,HIGH);
+   digitalWrite(lock2,HIGH);
+   
+   
+  //Impresion de Digitos en la Pantalla 
+  if (key){
+   lcd.setCursor(0,0);
+   lcd.print(key);
+   Serial.println(key);
+  
+
+    if(key == '*') 
+    
+    {
+      input_password = ""; //Boton para reinicio de Contrasena
+    } 
+    
+    else if(key == '#') 
+    
+    {
+      if(input_password == password_1 || input_password == password_2 || input_password == password_5 || input_password == password_6 || input_password == password_9 || input_password == password_10 ) {
+        Serial.println("LOCKER 1 ABIERTO");
+        digitalWrite(lock1,LOW);
+         lcd.setCursor(0,0);
+         lcd.println("----LOCKER 1----");
+         delay(1000);
+         lcd.clear();
+         lcd.setCursor(0,1);
+         lcd.println("--INGRESE LOCK#-");
+      }
+      
+      else if (input_password == password_3 || input_password == password_4|| input_password == password_7 || input_password == password_8 || input_password == password_11 || input_password == password_12 )
+      {
+        lcd.setCursor(0,0);
+        Serial.println("LOCKER 2 ABIERTO");
+        digitalWrite(lock2,LOW);
+        lcd.println("----LOCKER 2----");
+        delay(1000);
+        lcd.clear();
+        lcd.setCursor(0,1);
+        lcd.println("--INGRESE LOCK#-");
+      }
+      else{
+        Serial.println("INCORRECTO");
+        }
+
+      input_password = ""; // reinicio de la contrasena
+    } 
+    else 
+    {
+      input_password += key; 
+    }
+  }
+ 
+}
+
+float getTemp(String req, int dhtCount)
+{
+
+if(dhtCount ==1){
+  float h1 = dht1.readHumidity();
+  float t1 = dht1.readTemperature();
+  float f1 = dht1.readTemperature(true);
+  float hif1 = dht1.computeHeatIndex(f1, h1);
+  float hic1 = dht1.computeHeatIndex(t1, h1, false);
+  if (isnan(h1) || isnan(t1) || isnan(f1)) {
+   // Serial.println("SENSOR DHT DESCONECTADO!");
+    return;
+  }
+  
+  float k1 = t1 + 273.15;
+  if(req =="c"){
+    return t1;
+  }else if(req =="f"){
+    return f1;
+  }else if(req =="h"){
+    return h1;
+  }else if(req =="hif"){
+    return hif1;
+  }else if(req =="hic"){
+    return hic1;
+  }else if(req =="k"){
+    return k1;
+  }else{
+    return 0.000;
+  }
+}
+
+
+  if(dhtCount ==2){
+  float h1 = dht1.readHumidity();
+  float t1 = dht1.readTemperature();
+  if(t1<=20){
+      digitalWrite(enfriador,HIGH);
+    }
+    float f1 = dht1.readTemperature(true);
+
+  float h2 = dht2.readHumidity();
+  float t2 = dht2.readTemperature();
+  float f2 = dht2.readTemperature(true);
+  float hif2 = dht2.computeHeatIndex(f1, h1);
+  float hic2 = dht2.computeHeatIndex(t2, h2, false);
+  if (isnan(h2) || isnan(t2) || isnan(f2)) {
+   // Serial.println("SENSOR DHT DESCONECTADO!");
+    return;
+  }
+  
+  float k2 = t2 + 273.15;
+  if(req =="c"){
+    return t2;
+  }else if(req =="f"){
+    return f2;
+  }else if(req =="h"){
+    return h2;
+  }else if(req =="hif"){
+    return hif2;
+  }else if(req =="hic"){
+    return hic2;
+  }else if(req =="k"){
+    return k2;
+  }else{
+    return 0.000;
+  }
+}
+}
